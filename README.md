@@ -49,7 +49,7 @@ The plugin offers the following sliders for customization:
 - In the plugin, the channel ID corresponds to the SMPTE channel order it outputs (e.g. LRCS).
 - Use the GUI (when enabled) to monitor output levels and the logic steering direction in real time, plotted on an X-Y axis: X for left/right movement and Y for front/back movement.
 - As this plugin aims to emulate the logic steering found in some cinema sound processors, you may notice certain audio artifacts that are an inherent characteristic of this type of matrix decoding, especially when using higher Steering Strength settings.
-- Although this plugin was primarily developed to decode 2.0 LtRt signals, it can also be used with standard stereo audio. However, results may vary, so please monitor the output carefully. When working with audio that is not matrix-encoded, it is advisable to use the LRC mode to generate a center channel for 3.0 playback.
+- Although this plugin was primarily developed to decode 2.0 LtRt, it can also be used with standard stereo audio. However, results may vary, so please monitor the output carefully. When working with audio that is not matrix-encoded, it is advisable to use the LRC mode to generate a center channel for 3.0 playback.
 
 ## Disclaimer
 
