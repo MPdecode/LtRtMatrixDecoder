@@ -41,6 +41,7 @@ The plugin offers the following sliders for customization:
 - Make sure your project is set to 5.1 output to enable Full Logic decoding. In REAPER, configure both the Master Track and the LtRt track for 6 channels.
 - Load the plugin in your DAW as a JSFX effect on the track containing LtRt audio.
 - Adjust sliders to fine-tune the decoding process based on the source material and listening environment.
+- If your preferred DAW does not support JSFX, you can still use it through the AU, CLAP, or VST3 plugin hosts available here: https://github.com/JoepVanlier/ysfx.
 
 ## Notes
 
