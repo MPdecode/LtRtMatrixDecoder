@@ -17,6 +17,7 @@ To support exhibition workflows where the only available source masters for DCP 
 - Implements logic-based steering for dynamic signal separation.
 - Adaptive release times for steering, balancing quick transient response and ambient stability.
 - Applies a soft clipper to prevent distortion by smoothly limiting output signals.
+- Does not use FFTs, thereby avoiding the artifacts typically associated with that type of audio processing.
 - Provides adjustable parameters via sliders for fine-tuning the decoding process.
 - Includes a graphical user interface (GUI) with real-time visualization of output levels and steering direction.
 
