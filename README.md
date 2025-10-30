@@ -30,7 +30,7 @@ The plugin offers the following sliders for customization:
 - **Control Low Cut (Hz)** (100–500 Hz, default: 200 Hz): Defines the high-pass filter cutoff frequency for the control signal, used in the steering logic to focus on mid-range frequencies.
 - **Control High Cut (Hz)** (5000–15000 Hz, default: 10000 Hz): Sets the low-pass filter cutoff frequency for the control signal, limiting high-frequency content in the steering logic.
 - **Surround Low Pass Filter (Hz)** (5000–10000 Hz, default: 7000 Hz): Applies a low-pass filter to the surround channel, with a default of 7000 Hz per Dolby’s guidelines.
-- **Mode** (Full Logic LRCS (5.1) or LRC only, default: Full Logic LRCS): Toggles between 4.0 LRCS decoding (5.1 output) or LRC decoding (no surround output). Both modes output in SMPTE channel order.
+- **Mode** (Full Logic LRCS (5.1) or LRC, default: Full Logic LRCS): Toggles between 4.0 LRCS decoding (5.1 output) or LRC decoding (no surround output). Both modes output in SMPTE channel order.
 - **Steering Strength** (0–2, default: 1): Controls the intensity of the logic-based steering.
 - **Output Gain (dB)** (-20–0 dB, default: -3 dB): Adjusts the overall output gain for all channels.
 - **Surround Level (dB)** (-20–0 dB, default: -3 dB): Applies additional gain to the mono surround channel (in LS and RS), on top of the Output Gain. The default value of -3 dB aligns with Dolby’s 5.1-Channel Production Guidelines.
@@ -46,7 +46,6 @@ The plugin offers the following sliders for customization:
 
 ## Notes
 
-- The soft clipper ensures clean output by preventing hard clipping, especially during dynamic signal peaks.
 - The steering strength slider allows balancing between subtle and aggressive channel separation, depending on the desired effect.
 - In the plugin, the channel ID corresponds to the SMPTE channel order it outputs (e.g. LRCS).
 - Use the GUI (when enabled) to monitor output levels and the logic steering direction in real time, plotted on an X-Y axis: X for left/right movement and Y for front/back movement.
@@ -60,7 +59,7 @@ The plugin offers the following sliders for customization:
   
 ## Acknowledgments
 
-This plugin is inspired by technical white papers published by Dolby and the innovative matrix coefficients developed by Jim Fosgate.
+This plugin is a personal project developed by T.J. Vincent, inspired by technical white papers published by Dolby and the innovative matrix coefficients developed by Jim Fosgate.
 
 ## License
 
