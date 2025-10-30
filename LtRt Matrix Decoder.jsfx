@@ -436,5 +436,3 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_drawstr("Steering Direction");
 
 ); // End of the check for (slider10 == 1)
-
-
