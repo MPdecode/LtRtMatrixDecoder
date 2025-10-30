@@ -7,7 +7,7 @@ slider2:80<0,200,10>Bass Crossover (Hz)
 slider3:200<100,500,10>Control Low Cut (Hz)
 slider4:10000<5000,15000,100>Control High Cut (Hz)
 slider5:7000<5000,10000,100>Surround Low Pass Filter (Hz)
-slider6:0<0,1,1{Full Logic LRCS (5.1), LRC only}>Mode
+slider6:0<0,1,1{Full Logic LRCS (5.1), LRC}>Mode
 slider7:1<0,2,0.1>Steering Strength
 slider8:-3<-20,0,1>Output Gain (dB)
 slider9:-3<-20,0,1>Surround Level (dB)
@@ -436,4 +436,5 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_drawstr("Steering Direction");
 
 ); // End of the check for (slider10 == 1)
+
 
