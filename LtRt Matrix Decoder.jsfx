@@ -1,6 +1,7 @@
 // JSFX plugin hosted at https://github.com/MPdecode/LtRtMatrixDecoder
 
 desc: LtRt Matrix Decoder with Logic Steering
+version: 0.2
 
 slider1:20<0,50,1>Surround Delay (ms)
 slider2:80<0,200,10>Bass Crossover (Hz)
@@ -8,10 +9,11 @@ slider3:200<100,500,10>Control Low Cut (Hz)
 slider4:10000<5000,15000,100>Control High Cut (Hz)
 slider5:7000<5000,10000,100>Surround Low Pass Filter (Hz)
 slider6:0<0,1,1{Full Logic LRCS (5.1), LRC}>Mode
-slider7:1<0,2,0.1>Steering Strength
+slider7:1<0,2,0.1>Steering Strength 
 slider8:-3<-20,0,1>Output Gain (dB)
 slider9:-3<-20,0,1>Surround Level (dB)
-slider10:1<0,1,1{Off,On}>Show/Hide GUI
+slider10:1<0,1,1{Off,On}>Soft Clip
+slider11:1<0,1,1{Off,On}>Show/Hide GUI
 
 in_pin:Lt
 in_pin:Rt
@@ -37,26 +39,21 @@ gain_out = pow(10, slider8 / 20.0);
 surround_level = pow(10, slider9 / 20.0);
 
 // Delay setup
-// Dynamically calculate the maximum required delay memory
-// based on the slider's max value (50ms) to ensure it works at any sample rate.
 max_slider_delay_ms = 50.0;
-max_delay_samples = floor(max_slider_delay_ms * 0.001 * srate + 0.5) + 2; // +2 for safety buffer
+max_delay_samples = floor(max_slider_delay_ms * 0.001 * srate + 0.5) + 2;
 
-// Initialize the current delay and memory access
 delay_samples = floor(slider1 * 0.001 * srate + 0.5);
 delay_pos = 0;
 
-// Start of delay buffer at offset 0 (simple; total pool is 1M slots, so no conflicts)
 m = 0;
 
-// Zero the max needed samples (required, as memory may start with garbage)
 i = 0;
 while (i < max_delay_samples) (
   m[i] = 0;
   i += 1;
 );
 
-// Biquad coefficients for bass lowpass
+// Biquad coefficients for bass lowpass (same for both stages of LR4)
 function update_bass_coeffs() local(f, theta, sinth, costh, Q, alphab) (
   f = slider2 / srate;
   theta = 2 * pi * f;
@@ -76,7 +73,11 @@ function update_bass_coeffs() local(f, theta, sinth, costh, Q, alphab) (
 );
 update_bass_coeffs();
 
-// State for bass lowpass L and R
+// States for 4th-order LR bass lowpass: two cascaded 2nd-order stages
+// First stage
+l_low1_x1 = l_low1_x2 = l_low1_y1 = l_low1_y2 = 0;
+r_low1_x1 = r_low1_x2 = r_low1_y1 = r_low1_y2 = 0;
+// Second stage
 l_low_x1 = l_low_x2 = l_low_y1 = l_low_y2 = 0;
 r_low_x1 = r_low_x2 = r_low_y1 = r_low_y2 = 0;
 
@@ -149,7 +150,7 @@ function update_sur_coeffs() local(f, theta, sinth, costh, Q, alphas) (
 update_sur_coeffs();
 
 // State for surround lowpass
-s_lp_x1 = s_lp_x2 = s_lp_y1 = s_lp_y2 = 0;
+s_lp1_x1 = s_lp1_x2 = s_lp1_y1 = s_lp1_y2 = 0;
 
 // Level vars
 l_level = r_level = c_level = s_level = 0.0000000001;
@@ -182,16 +183,26 @@ delay_samples = floor(slider1 * 0.001 * srate + 0.5);
 Lt = spl0;
 Rt = spl1;
 
-// Bass lowpass
-l_low = a0b * Lt + a1b * l_low_x1 + a2b * l_low_x2 - b1b * l_low_y1 - b2b * l_low_y2;
-l_low_x2 = l_low_x1; l_low_x1 = Lt;
+// NEW: 4th-order Linkwitz-Riley bass lowpass (two cascaded stages)
+// First stage
+l_low1 = a0b * Lt + a1b * l_low1_x1 + a2b * l_low1_x2 - b1b * l_low1_y1 - b2b * l_low1_y2;
+l_low1_x2 = l_low1_x1; l_low1_x1 = Lt;
+l_low1_y2 = l_low1_y1; l_low1_y1 = l_low1;
+
+r_low1 = a0b * Rt + a1b * r_low1_x1 + a2b * r_low1_x2 - b1b * r_low1_y1 - b2b * r_low1_y2;
+r_low1_x2 = r_low1_x1; r_low1_x1 = Rt;
+r_low1_y2 = r_low1_y1; r_low1_y1 = r_low1;
+
+// Second stage (former single stage, now on first-stage output)
+l_low = a0b * l_low1 + a1b * l_low_x1 + a2b * l_low_x2 - b1b * l_low_y1 - b2b * l_low_y2;
+l_low_x2 = l_low_x1; l_low_x1 = l_low1;
 l_low_y2 = l_low_y1; l_low_y1 = l_low;
 
-r_low = a0b * Rt + a1b * r_low_x1 + a2b * r_low_x2 - b1b * r_low_y1 - b2b * r_low_y2;
-r_low_x2 = r_low_x1; r_low_x1 = Rt;
+r_low = a0b * r_low1 + a1b * r_low_x1 + a2b * r_low_x2 - b1b * r_low_y1 - b2b * r_low_y2;
+r_low_x2 = r_low_x1; r_low_x1 = r_low1;
 r_low_y2 = r_low_y1; r_low_y1 = r_low;
 
-// Mid-high
+// Mid-high (complementary highpass via subtraction)
 L_mid = Lt - l_low;
 R_mid = Rt - r_low;
 
@@ -241,8 +252,8 @@ fb_db = max(-max_db, min(max_db, fb_db));
 
 // Adaptive release computation
 dominance_strength = max( abs(lr_db), abs(fb_db) ) / max_db;
-fast_release_tau = 0.005;  // 5ms for quick transient response
-slow_release_tau = 0.2;    // 200ms for ambient stability
+fast_release_tau = 0.005;
+slow_release_tau = 0.2;
 release_tau = slow_release_tau - (slow_release_tau - fast_release_tau) * dominance_strength;
 alpha_release = exp(-1 / (release_tau * srate));
 beta_release = 1 - alpha_release;
@@ -295,23 +306,22 @@ S = S_low + S_mid;
 
 (mode == 1) ? S = 0 : (
   // Surround lowpass
-  S_lp = a0s * S + a1s * s_lp_x1 + a2s * s_lp_x2 - b1s * s_lp_y1 - b2s * s_lp_y2;
-  s_lp_x2 = s_lp_x1; s_lp_x1 = S;
-  s_lp_y2 = s_lp_y1; s_lp_y1 = S_lp;
+  S_lp = a0s * S + a1s * s_lp1_x1 + a2s * s_lp1_x2 - b1s * s_lp1_y1 - b2s * s_lp1_y2;
+  s_lp1_x2 = s_lp1_x1; s_lp1_x1 = S;
+  s_lp1_y2 = s_lp1_y1; s_lp1_y1 = S_lp;
   S = S_lp;
 
-  // Delay guard: only use circular buffer when delay_samples > 0
-S_delayed = S;
-(delay_samples > 0) ? (
-  S_delayed = m[delay_pos];
-  m[delay_pos] = S;
-  delay_pos += 1;
-  (delay_pos >= delay_samples) ? delay_pos = 0;
-);
-S = S_delayed;
+  // Delay guard
+  S_delayed = S;
+  (delay_samples > 0) ? (
+    S_delayed = m[delay_pos];
+    m[delay_pos] = S;
+    delay_pos += 1;
+    (delay_pos >= delay_samples) ? delay_pos = 0;
+  );
+  S = S_delayed;
 );
 
-// Output gain
 FL *= gain_out;
 FR *= gain_out;
 FC *= gain_out;
@@ -319,7 +329,7 @@ LS = S * surround_level * gain_out;
 RS = S * surround_level * gain_out;
 
 // Output levels
-(slider10 == 1) ? (
+(slider11 == 1) ? (
   fl_level = alpha_out * fl_level + beta_out * abs(FL);
   fr_level = alpha_out * fr_level + beta_out * abs(FR);
   fc_level = alpha_out * fc_level + beta_out * abs(FC);
@@ -327,11 +337,13 @@ RS = S * surround_level * gain_out;
 );
 
 // Soft clip
-FL = softclip(FL);
-FR = softclip(FR);
-FC = softclip(FC);
-LS = softclip(LS);
-RS = softclip(RS);
+(slider10 == 1) ? (
+  FL = softclip(FL);
+  FR = softclip(FR);
+  FC = softclip(FC);
+  LS = softclip(LS);
+  RS = softclip(RS);
+);
 
 // 5.1 output
 spl0 = FL;
@@ -343,12 +355,11 @@ spl5 = RS;
 
 @gfx 640 240
 
-// Always clear the background to prevent leftover graphics when toggled off
+// Always clear the background
 gfx_set(0.1, 0.1, 0.1, 1);
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// Only draw the meters and plot if the GUI is toggled 'On'
-(slider10 == 1) ? (
+(slider11 == 1) ? (
 
   // Output levels (FL, FR, C, S) as vertical meters
   bar_w = 40;
@@ -356,10 +367,10 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   margin = 20;
   space = 20;
   x_pos = margin;
-  
+
   db_min = -60;
   db_max = 0;
-  
+
   // FL
   db_fl = 20 * log10(fl_level + 0.000000000001);
   height_fl = max(0, (db_fl - db_min) / (db_max - db_min)) * bar_h;
@@ -369,7 +380,7 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_x = x_pos + 10; gfx_y = gfx_h - 15;
   gfx_drawstr("FL");
   x_pos += bar_w + space;
-  
+
   // FR
   db_fr = 20 * log10(fr_level + 0.000000000001);
   height_fr = max(0, (db_fr - db_min) / (db_max - db_min)) * bar_h;
@@ -379,7 +390,7 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_x = x_pos + 10; gfx_y = gfx_h - 15;
   gfx_drawstr("FR");
   x_pos += bar_w + space;
-  
+
   // C
   db_fc = 20 * log10(fc_level + 0.000000000001);
   height_fc = max(0, (db_fc - db_min) / (db_max - db_min)) * bar_h;
@@ -389,7 +400,7 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_x = x_pos + 10; gfx_y = gfx_h - 15;
   gfx_drawstr("C");
   x_pos += bar_w + space;
-  
+
   // S
   db_s_out = 20 * log10(s_level_out + 0.000000000001);
   height_s = max(0, (db_s_out - db_min) / (db_max - db_min)) * bar_h;
@@ -399,17 +410,17 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_x = x_pos + 10; gfx_y = gfx_h - 15;
   gfx_drawstr("S");
   x_pos += bar_w + space;
-  
+
   // Dominant signal on X,Y axis
   plot_size = min(gfx_h - 65, gfx_w - x_pos - margin);
   center_x = x_pos + plot_size / 2;
-  center_y = (gfx_h - 20) / 2 + 20; // Center vertically, accounting for labels
-  
+  center_y = (gfx_h - 20) / 2 + 20;
+
   // Draw axes
   gfx_set(1, 1, 1, 0.2);
-  gfx_line(center_x - plot_size/2, center_y, center_x + plot_size/2, center_y); // X axis
-  gfx_line(center_x, center_y - plot_size/2, center_x, center_y + plot_size/2); // Y axis
-  
+  gfx_line(center_x - plot_size/2, center_y, center_x + plot_size/2, center_y);
+  gfx_line(center_x, center_y - plot_size/2, center_x, center_y + plot_size/2);
+
   // Labels
   gfx_set(1, 1, 1, 1);
   gfx_x = center_x - plot_size/2 - 15; gfx_y = center_y - 5;
@@ -420,19 +431,19 @@ gfx_rect(0, 0, gfx_w, gfx_h);
   gfx_drawstr("F");
   gfx_x = center_x - 5; gfx_y = center_y + plot_size/2 + 7;
   gfx_drawstr("B");
-  
+
   // Plot point
   lr_norm = lr_db / max_db;
   fb_norm = fb_db / max_db;
   half = plot_size / 2;
   pos_x = center_x - lr_norm * half;
   pos_y = center_y - fb_norm * half;
-  
+
   gfx_set(1, 0, 0, 1);
   gfx_circle(pos_x, pos_y, 5, 1, 1);
-  
+
   // Title
   gfx_x = x_pos; gfx_y = 10;
   gfx_drawstr("Steering Direction");
 
-); // End of the check for (slider10 == 1)
+);
