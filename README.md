@@ -34,6 +34,7 @@ The plugin offers the following sliders for customization:
 - **Steering Strength** (0–2, default: 1): Controls the intensity of the logic-based steering.
 - **Output Gain (dB)** (-20–0 dB, default: -3 dB): Adjusts the overall output gain for all channels.
 - **Surround Level (dB)** (-20–0 dB, default: -3 dB): Applies additional gain to the mono surround channel (in LS and RS), on top of the Output Gain. The default value of -3 dB aligns with Dolby’s 5.1-Channel Production Guidelines.
+- **Soft Clip** (Off/On, default: On): Enables or disables the Soft Clip function.
 - **Show/Hide GUI** (Off/On, default: On): Toggles the graphical interface, which displays output level meters for FL, FR, C, and S, and a plot of the steering direction.
 
 ## Installation and Usage
@@ -51,6 +52,18 @@ The plugin offers the following sliders for customization:
 - Use the GUI (when enabled) to monitor output levels and the logic steering direction in real time, plotted on an X-Y axis: X for left/right movement and Y for front/back movement.
 - As this plugin aims to emulate the logic steering found in some cinema sound processors, you may notice certain audio artifacts that are an inherent characteristic of this type of matrix decoding, especially when using higher Steering Strength settings.
 - Although this plugin was primarily developed to decode 2.0 LtRt, it can also be used to upmix standard stereo audio. However, results may vary, so please monitor the output carefully. When working with audio that is not matrix-encoded, it is advisable to use the LRC mode to generate a center channel for 3.0 playback.
+
+## Version History
+
+### v0.2
+
+- Updated bass crossover to a **Linkwitz-Riley 4th-order (LR4)** design for improved phase alignment and flat summation between low and mid/high bands.
+- Made the soft clip function optional.
+- Minor code cleanup and improved readability.
+
+### v0.1
+
+- Original release.
 
 ## Disclaimer
 
